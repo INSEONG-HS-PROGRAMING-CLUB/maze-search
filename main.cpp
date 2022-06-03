@@ -83,5 +83,5 @@ int main()
     cursor cur(1, 18);
     cur.hide_cursor();
 
-    cur.gotoxy(0, 0);
+    cur.gotoxy(0, 0); 
 }
