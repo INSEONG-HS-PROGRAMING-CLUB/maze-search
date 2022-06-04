@@ -2,6 +2,7 @@
 #include <conio.h>
 #include <iostream>
 #include <Windows.h>
+#include <string>
 using namespace std;
 
 constexpr int U = 72;
@@ -61,8 +62,17 @@ public:
         pos.Y -= y;
         gotoxy(pos.X, pos.Y);
         cout << "■";
-        if (graph[pos.Y][pos.X] == 'e')
+        game_end(pos.X, pos.Y);
+    }
+    void game_end(int x, int y)
+    {
+        if (graph[y][x] == 'e')
+        {
+            gotoxy(0, h + 10);
+            system("pause");
+            system("pause");
             exit(0);
+        }
     }
     void hide_cursor()
     {
@@ -82,7 +92,7 @@ public:
     void print_time(double t)
     {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-        gotoxy(w / 2 - 3, h + 5); cout << "현재시간 : " << (double)t / 1000;
+        gotoxy(w / 2 - 3, h + 5); cout << "Time : " << (double)t / 1000;
         hide_cursor();
     }
 };
@@ -115,6 +125,8 @@ void initGraph()
 
 int main()
 {
+    system("mode con lines=30 cols=60");
+
     ios_base::sync_with_stdio(false);
     cout.tie(nullptr);
 
@@ -141,6 +153,4 @@ int main()
         }
         cur.print_time(clock() - start);
     }
-    system("pause");
-    system("pause");
 }
