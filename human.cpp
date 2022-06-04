@@ -10,7 +10,7 @@ constexpr int L = 75;
 constexpr int R = 77;
 
 string graph[] = {
-    "111111111111111111111111111101",
+    "1111111111111111111111111111e1",
     "100000000000000000000000000001",
     "100000000000000000000000000001",
     "100000000000000000000000000001",
@@ -28,7 +28,7 @@ string graph[] = {
     "100000000000000000000000000001",
     "100000000000000000000000000001",
     "100000000000000000000000000001",
-    "101111111111111111111111111111"
+    "1s1111111111111111111111111111"
 };
 
 int h = sizeof(graph) / sizeof(graph[0]);
@@ -37,26 +37,32 @@ int w = graph[0].length();
 class cursor {
 public:
     COORD pos;
-    cursor(int x, int y)
+    cursor(COORD start)
     {
-        pos.X = x << 1;
-        pos.Y = y;
+        pos.X = start.X;
+        pos.Y = start.Y;
+    }
+    void gotoxy(short x, short y)
+    {
+        COORD position = { x << 1, y };
+        auto std = GetStdHandle(STD_OUTPUT_HANDLE);
+        SetConsoleCursorPosition(std, position);
     }
     void delete_cursor()
     {
-        auto std = GetStdHandle(STD_OUTPUT_HANDLE);
-        SetConsoleCursorPosition(std, pos);
+        gotoxy(pos.X, pos.Y);
         cout << "  ";
     }
-    void gotoxy(int x, int y)
+    void move(int x, int y)
     {
         if (!can_go(x, -y)) return;
         delete_cursor();
-        pos.X += x << 1;
-        pos.Y += -y;
-        auto std = GetStdHandle(STD_OUTPUT_HANDLE);
-        SetConsoleCursorPosition(std, pos);
+        pos.X += x;
+        pos.Y -= y;
+        gotoxy(pos.X, pos.Y);
         cout << "■";
+        if (graph[pos.Y][pos.X] == 'e')
+            exit(0);
     }
     void hide_cursor()
     {
@@ -69,25 +75,42 @@ public:
     }
     bool can_go(int x, int y)
     {
-        x += pos.X + x;
+        x += pos.X;
         y += pos.Y;
-        return (x >> 1) < w && y < h && (x >> 1) >= 0 && y >= 0 && graph[y][x >> 1] == '0';
+        return x >= 0 && y >= 0 && x < w&& y < h&& graph[y][x] != '1';
+    }
+    void print_time(double t)
+    {
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+        gotoxy(w / 2 - 3, h + 5); cout << "현재시간 : " << (double)t / 1000;
+        hide_cursor();
     }
 };
 
+COORD start = { -1, -1 };
+
 void initGraph()
 {
+    int x = 0, y = 0;
+
     for (string s : graph)
     {
         for (char c : s)
         {
-            if (c - '0')
-                cout << "■";
-            else
+            switch (c)
+            {
+            case '0': cout << "  "; break;
+            case '1': cout << "■"; break;
+            case 'e': cout << "▣"; break;
+            case 's':
+                start.X = x;
+                start.Y = y;
                 cout << "  ";
+            } x++;
         }
-        cout << '\n';
+        cout << '\n'; y++; x = 0;
     }
+    if (start.X == -1) exit(0);
 }
 
 int main()
@@ -97,10 +120,12 @@ int main()
 
     initGraph();
 
-    cursor cur(1, 18);
+    cursor cur(start);
     cur.hide_cursor();
 
-    cur.gotoxy(0, 0);
+    cur.move(0, 0);
+
+    time_t start = clock();
 
     while (1)
     {
@@ -108,11 +133,14 @@ int main()
         {
             switch (_getch())
             {
-            case U: cur.gotoxy(0, 1); break;
-            case R: cur.gotoxy(1, 0); break;
-            case D: cur.gotoxy(0, -1); break;
-            case L: cur.gotoxy(-1, 0); break;
+            case U: cur.move(0, 1); break;
+            case R: cur.move(1, 0); break;
+            case D: cur.move(0, -1); break;
+            case L: cur.move(-1, 0); break;
             }
         }
+        cur.print_time(clock() - start);
     }
+    system("pause");
+    system("pause");
 }
