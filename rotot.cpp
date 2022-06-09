@@ -15,27 +15,32 @@ constexpr int R = 77;
 string graph[] = {
     "1111111111111111111111111111e1",
     "100000000000000000000000000001",
+    "101111111111111111111111111111",
     "100000000000000000000000000001",
+    "101111111111111111111111111111",
     "100000000000000000000000000001",
+    "101111111111111111111111111111",
     "100000000000000000000000000001",
+    "101111111111111111111111111111",
     "100000000000000000000000000001",
+    "101111111111111111111111111111",
     "100000000000000000000000000001",
+    "101111111111111111111111111111",
     "100000000000000000000000000001",
+    "101111111111111111111111111111",
     "100000000000000000000000000001",
-    "100000000000000000000000000001",
-    "100000000000000000000000000001",
-    "100000000000000000000000000001",
-    "100000000000000000000000000001",
-    "100000000000000000000000000001",
-    "100000000000000000000000000001",
-    "100000000000000000000000000001",
-    "100000000000000000000000000001",
+    "101111111111111111111111111111",
     "100000000000000000000000000001",
     "1s1111111111111111111111111111"
 };
 
 int h = sizeof(graph) / sizeof(graph[0]);
 int w = graph[0].length();
+
+int dx[] = { 1, -2, 1, 0 };
+int dy[] = { 0, 0, 1, -2 };
+
+bool visit[100][100];
 
 class cursor {
 public:
@@ -51,30 +56,17 @@ public:
         auto std = GetStdHandle(STD_OUTPUT_HANDLE);
         SetConsoleCursorPosition(std, position);
     }
-    void delete_cursor()
+    void remove(int x, int y)
     {
-        gotoxy(pos.X, pos.Y);
+        gotoxy(x, y);
         cout << "  ";
     }
-    void move(int x, int y)
-    {
-        if (!can_go(x, -y)) return;
-        delete_cursor();
-        pos.X += x;
-        pos.Y -= y;
-        gotoxy(pos.X, pos.Y);
-        cout << "■";
-        game_end(pos.X, pos.Y);
-    }
-    void moveTo(int x, int y)
+    void moveto(int x, int y)
     {
         if (!can_goto(x, y)) return;
-        delete_cursor();
-        pos.X = x;
-        pos.Y = y;
-        gotoxy(pos.X, pos.Y);
+        gotoxy(x, y);
         cout << "■";
-        game_end(pos.X, pos.Y);
+        game_end(x, y);
     }
     void game_end(int x, int y)
     {
@@ -95,15 +87,9 @@ public:
         SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cci);
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
     }
-    bool can_go(int x, int y)
-    {
-        x += pos.X;
-        y += pos.Y;
-        return x >= 0 && y >= 0 && x < w&& y < h&& graph[y][x] != '1';
-    }
     bool can_goto(int x, int y)
     {
-        return x >= 0 && y >= 0 && x < w&& y < h&& graph[y][x] != '1';
+        return x >= 0 && y >= 0 && x < w&& y < h&& graph[y][x] != '1' && !visit[y][x];
     }
     void print_time(double t)
     {
@@ -139,34 +125,24 @@ void initGraph()
     if (start.X == -1) exit(0);
 }
 
-int dx[] = { 1, -2, 1, 0 };
-int dy[] = { 0, 0, 1, -2 };
-
-void bfs(cursor& cur, time_t st)
+void dfs(cursor& cur, int x, int y, time_t st)
 {
-    queue<pair<int, int>> q;
-    bool visit[100][100] = { 0 };
-    q.push({ start.X, start.Y });
+    cur.print_time(clock() - st);
+    Sleep(10);
+    cur.moveto(x, y);
+    visit[y][x] = true;
 
-    while (!q.empty())
+    for (int i = 0; i < 4; i++)
     {
-
-        int x = q.front().first;
-        int y = q.front().second;
-        cur.moveTo(x, y);
-        q.pop();
-        for (int i = 0; i < 4; i++)
+        x += dx[i];
+        y += dy[i];
+        if (cur.can_goto(x, y))
         {
-            x += dx[i];
-            y += dy[i];
-            if (cur.can_goto(x, y) && !visit[y][x])
-            {
-                visit[y][x] = 1;
-                q.push({ x, y });
-            }
+            dfs(cur, x, y, st);
+            Sleep(10);
+            cur.print_time(clock() - st);
+            cur.remove(x, y);
         }
-        Sleep(50);
-        cur.print_time(clock() - st);
     }
 }
 
@@ -182,6 +158,7 @@ int main()
     cursor cur(start);
     cur.hide_cursor();
 
-    cur.move(0, 0);
-    bfs(cur, clock());
+    time_t st = clock();
+
+    dfs(cur, start.X, start.Y, st);
 }
